@@ -1,0 +1,46 @@
+image: google/cloud-sdk:latest
+
+definitions:
+  steps:
+    - step: &lint
+        name: Lint
+        image: oven/bun:latest
+        caches:
+          - bun
+        script:
+          - bun install
+          - bun run lint
+        
+    - step: &build
+        name: Build
+        image: oven/bun:latest
+        caches:
+          - bun
+        script:
+          - bun install
+          - bun run build
+        artifacts:
+          - .next/**
+          - public/**
+          - package.json
+          - bun.lockb
+          - next.config.js
+      
+    - step: &deploy
+        name: Deploy to Cloud Run
+        script:
+          - /bin/bash -x build.sh dev
+
+pipelines:
+  default:
+    - step: *lint
+  
+  branches:
+    main:
+      - step: *lint
+      - step: *build
+      - step: *deploy
+
+definitions:
+  caches:
+    bun: ~/.bun/install/cache
